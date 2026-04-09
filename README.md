@@ -58,7 +58,7 @@ tiktok-web-signer/
 │   ├── bogus.py
 │   ├── gnarly.py
 │   └── tiktok_fingerprint.py
-├── test.py
+├── example.py
 └── README.md
 ```
 
