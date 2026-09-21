@@ -1,100 +1,69 @@
-# TikTok Web — Signature Reverse Engineering
+# ⚡ TikTok Web Signer
 
-> **Reverse-engineering study of TikTok Web's request signing pipeline, focused on `x-gnarly` and `x-dynosaur`.**
+### 🔐 X-Dynosaur & X-Gnarly Generation
 
-A standalone Python implementation that reconstructs the observed TikTok Web signing mechanisms from browser-generated signatures, including payload construction, custom encoding, dynamic key handling, ChaCha20-based encryption, and signature decryption.
+> **Reverse-engineered TikTok Web signing implementation for SDK `5.3.2` / SCM `1.0.0.417`.**
 
-This project is intended for **protocol research, reverse engineering, and educational analysis**.
+<p align="center">
 
----
+**X-DYNOSAUR**   `×`   **X-GNARLY**   `×`   **CHACha20**
 
-## ⚡ What is this?
+</p>
 
-Modern TikTok Web requests can contain dynamically generated cryptographic parameters derived from request metadata and internal browser-side logic.
-
-This project analyzes and reconstructs two of those mechanisms:
-
-```text
-x-gnarly
-x-dynosaur
-```
-
-Instead of treating the signatures as opaque strings, the implementation breaks the process into its individual stages:
-
-```text
-Request Data
-     │
-     ├── Query String
-     ├── Request Body
-     └── User-Agent
-             │
-             ▼
-      Metadata / Hashing
-             │
-             ▼
-      Binary Payload
-             │
-             ▼
-       Dynamic Key
-             │
-             ▼
-        ChaCha20
-             │
-             ▼
-    Key Injection / Packing
-             │
-             ▼
-    Custom Base64 Encoding
-             │
-             ▼
-      Final Signature
-```
-
-The reverse direction is also implemented:
-
-```text
-Final Signature
-      │
-      ▼
-Custom Base64 Decode
-      │
-      ▼
-Header / Key Recovery
-      │
-      ▼
-ChaCha20 Decryption
-      │
-      ▼
-Binary Payload
-      │
-      ▼
-Field Reconstruction
-      │
-      ▼
-Decoded Signing Metadata
-```
+<p align="center">
+  <img src="https://img.shields.io/badge/SDK-5.3.2-black?style=for-the-badge&logo=tiktok" />
+  <img src="https://img.shields.io/badge/SCM-1.0.0.417-red?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Python-3.x-blue?style=for-the-badge&logo=python" />
+  <img src="https://img.shields.io/badge/Reverse%20Engineering-⚡-purple?style=for-the-badge" />
+</p>
 
 ---
 
-## 🔬 Reverse-Engineered Components
+## 🧬 What is this?
 
-### `x-gnarly`
+A Python implementation of **TikTok Web's request signing mechanisms**, focused on generating and decoding:
 
-The `x-gnarly` implementation reconstructs the observed signing format, including:
+```text
+╔══════════════════════════════════════╗
+║          TikTok Web Signer           ║
+╠══════════════════════════════════════╣
+║  🔐 X-Dynosaur                      ║
+║  🔐 X-Gnarly                        ║
+║  ⚙️  SDK      5.3.2                 ║
+║  ⚙️  SCM      1.0.0.417             ║
+║  🧪 Browser-observed signatures     ║
+╚══════════════════════════════════════╝
+```
 
-* Custom Base64 alphabet
-* Dynamic 48-byte key generation
-* Key insertion into the encrypted payload
-* Key recovery during decryption
-* ChaCha20-compatible stream construction
-* Request metadata hashing
-* Version-dependent fields
-* Binary field serialization
-* Field ordering
-* Integrity/check fields
-* Signature parsing and inspection
+The project reconstructs the signing pipeline instead of treating the generated values as opaque strings.
 
-The implementation exposes both:
+---
+
+## 🚀 Features
+
+| Feature                         | Status |
+| ------------------------------- | :----: |
+| 🔐 X-Gnarly generation          |    ✅   |
+| 🦖 X-Dynosaur generation        |    ✅   |
+| 🔓 X-Gnarly decryption          |    ✅   |
+| 🔓 X-Dynosaur decryption        |    ✅   |
+| ⚡ SDK `5.3.2`                   |    ✅   |
+| 🧩 SCM `1.0.0.417`              |    ✅   |
+| 🔑 Dynamic key generation       |    ✅   |
+| 🔎 Dynamic key extraction       |    ✅   |
+| 🔐 ChaCha20 implementation      |    ✅   |
+| 🧬 Custom Base64 alphabet       |    ✅   |
+| 📦 Binary payload serialization |    ✅   |
+| 🔬 Payload inspection           |    ✅   |
+| 🔄 Encrypt / decrypt round-trip |    ✅   |
+
+## The implementation exposes both encryption and decryption paths for the two signing formats.
+
+# 🔥 X-Gnarly
+
+`X-Gnarly` reconstructs a binary request-signing format containing request metadata, hashes, timestamps, version information, request counters, and integrity fields.
+
+The implementation supports:
 
 ```python
 xgnarly.encrypt(...)
@@ -106,165 +75,184 @@ and:
 xgnarly.x_gnarly_decrypt(...)
 ```
 
-The decryptor reconstructs the internal record and exposes fields such as request hashes, timestamp, canvas value, version, SCM version, request counters, and encryption metadata.
-
----
-
-### `x-dynosaur`
-
-`x-dynosaur` uses a related but distinct binary format and encoding layer.
-
-The implementation reconstructs:
-
-* Signature header generation
-* Signing mode / sign type
-* Dynamic key insertion
-* Custom Base64
-* Tagged binary records
-* Browser metadata encoding
-* Hash-based fields
-* Version-specific extended fields
-* Payload checksum construction
-* ChaCha20 encryption
-* Complete payload decoding
-
-The parser maps the binary tags back into recognizable fields such as:
+The decoded record can expose values including:
 
 ```text
-timestamp
-version
-canvas
-query_hash
-body_hash
-user_agent_hash
-num_total_requests
-num_encrypt_requests
-scm_version
-field_8
-ubcode
-ex_proof_code
+🧩 envcode
+🧩 ubcode
+🔎 query_string_md5
+🔎 body_md5
+🔎 user_agent_md5
+⏱️ timestamp
+🎨 canvas
+📦 version
+⚙️ scm_version
+🔢 request counters
+🔐 integrity fields
 ```
 
 ---
 
-## 🧬 Cryptographic Layer
+# 🦖 X-Dynosaur
 
-At the core of both implementations is a reconstructed ChaCha20-style stream cipher.
+`X-Dynosaur` uses a separate tagged binary payload and signing structure.
 
-The implementation derives its round count from the generated key material and implements the quarter-round operations directly rather than relying on an external cryptographic wrapper.
-
-The encryption pipeline is effectively:
+The reconstructed format contains fields such as:
 
 ```text
-Key Words
-   │
-   ▼
-ChaCha20 State
-   │
-   ▼
-Keystream Blocks
-   │
-   ▼
-Payload XOR
-   │
-   ▼
-Encrypted Payload
+🔐 checksum
+⏱️ timestamp
+📦 version
+🎨 canvas
+🔎 query_hash
+🔎 body_hash
+🌐 user_agent_hash
+🔢 num_total_requests
+🔒 num_encrypt_requests
+⚙️ scm_version
+🧩 ubcode
+🛡️ proof / extended fields
 ```
 
-The same mechanism is reversible, allowing captured signatures to be analyzed.
+The parser reconstructs the tagged payload and maps internal field identifiers into readable names.
 
 ---
 
-## 🗝️ Dynamic Key Handling
+# ⚙️ Signing Pipeline
 
-A particularly interesting part of the format is that the encryption key is not simply stored separately.
+```text
+                ┌─────────────────┐
+                │   HTTP Request  │
+                └────────┬────────┘
+                         │
+             ┌───────────┴───────────┐
+             ▼                       ▼
+      Query String              Request Body
+             │                       │
+             └───────────┬───────────┘
+                         │
+                    User-Agent
+                         │
+                         ▼
+              ┌──────────────────┐
+              │ Request Metadata │
+              └────────┬─────────┘
+                       │
+                       ▼
+              ┌──────────────────┐
+              │ Binary Payload   │
+              └────────┬─────────┘
+                       │
+                       ▼
+              🔑 Dynamic Key
+                       │
+                       ▼
+                 🔐 ChaCha20
+                       │
+                       ▼
+             Key Injection / Packing
+                       │
+                       ▼
+             Custom Base64 Encoding
+                       │
+                       ▼
+                🚀 Signature
+```
 
-The implementation generates a 48-byte key:
+---
+
+# 🔐 Cryptographic Layer
+
+The implementation contains a direct ChaCha20-style implementation including:
+
+* quarter-round operations
+* state initialization
+* configurable rounds
+* block generation
+* keystream generation
+* XOR encryption/decryption
+* 32-bit word handling
+
+## The round count is derived from the generated key material rather than being hard-coded to the conventional ChaCha20 configuration.
+
+# 🗝️ Dynamic Keys
+
+One of the more interesting parts of the format is the handling of the encryption key.
+
+The signer generates:
 
 ```text
 12 × uint32
-       ↓
-    48 bytes
+      ↓
+  48-byte key
 ```
 
 The key is then inserted into the encrypted payload at a calculated position.
 
-During decryption, the implementation searches for the key segment by testing the alignment relationship between the candidate key and remaining ciphertext.
+During decoding, the implementation searches for the key segment and reconstructs the original cipher state.
 
 ```text
-┌──────────────────────────────────────────┐
-│              Packed Data                 │
-├───────────────┬──────────────────────────┤
-│   Ciphertext  │        48-byte key       │
-└───────────────┴──────────────────────────┘
-                       ▲
-                       │
-                recovered dynamically
+┌──────────────────────────────────────────────┐
+│                  SIGNATURE                   │
+├──────────┬───────────────────┬───────────────┤
+│ Header   │     Ciphertext    │   Key 🔑      │
+└──────────┴───────────────────┴───────────────┘
+                         ▲
+                         │
+                  dynamic position
 ```
 
-This logic is implemented independently for both signing formats.
+## Both signer implementations contain dedicated key insertion and recovery logic.
+
+# 🧬 Custom Encoding
+
+The signatures do not use ordinary Base64 directly.
+
+A custom alphabet is applied:
+
+```text
+Standard Base64
+        ↓
+Custom alphabet translation
+        ↓
+TikTok-style encoded output
+```
+
+The same translation layer is reversed during decoding.
 
 ---
 
-## 🧩 Binary Serialization
+# 🧪 Browser Validation
 
-The signatures aren't simply encrypted JSON.
+The repository includes **browser-observed signer outputs** for validation rather than relying exclusively on fabricated test vectors.
 
-Both formats construct compact binary records before encryption.
-
-For `x-gnarly`, fields are represented using numeric identifiers and length-prefixed values:
-
-```text
-┌────────┬──────────┬──────────────┐
-│ Field  │  Length  │    Value     │
-└────────┴──────────┴──────────────┘
-```
-
-The implementation reconstructs the original field names during decoding:
-
-```python
-{
-    "envcode": ...,
-    "ubcode": ...,
-    "query_string_md5": ...,
-    "body_md5": ...,
-    "user_agent_md5": ...,
-    "timestamp": ...,
-    "canvas": ...,
-    "version": ...,
-    ...
-}
-```
-
-`x-dynosaur` instead uses tagged records where each field is encoded as:
-
-```text
-TAG + LENGTH + VALUE
-```
-
----
-
-## 🧪 Browser-Derived Testing
-
-The repository includes test values obtained from actual browser-side signer output rather than randomly generated signatures.
-
-The test harness feeds captured signer strings into the reconstructed decryptors:
+The captured values can be passed directly through the reconstructed decryptors:
 
 ```python
 decrypted_gnarly = xgnarly.x_gnarly_decrypt(gnarly)
 decrypted_dyno = xdynosaur.x_dynosaur_decrypt(dyno)
 ```
 
-This allows the implementation to be compared against real browser-generated values.
+This allows the generated structures to be inspected and compared against observed browser behavior.
 
 ---
 
-## 🚀 Usage
+# 💻 Usage
 
-### Generate signatures
+### Generate both signatures
 
 ```python
 from signers import xdynosaur, xgnarly
+
+sign_opts = {
+    "envcode": 65,
+    "canvas": 1938040196,
+    "ubcode": 0,
+    "version": "5.3.2",
+    "scm_version": "1.0.0.417",
+    "total_reqs": 46,
+    "enc_reqs": 10,
+}
 
 gnarly = xgnarly.encrypt(
     qs="",
@@ -280,138 +268,56 @@ dyno = xdynosaur.encrypt(
     **sign_opts
 )
 
-print(gnarly)
-print(dyno)
+print("X-Gnarly:", gnarly)
+print("X-Dynosaur:", dyno)
 ```
 
-The example configuration demonstrates request metadata such as:
-
-```python
-sign_opts = {
-    "envcode": 65,
-    "canvas": 1938040196,
-    "ubcode": 0,
-    "version": "5.3.2",
-    "scm_version": "1.0.0.417",
-    "total_reqs": 46,
-    "enc_reqs": 10,
-}
-```
+The example configuration mirrors the SDK/SCM versions represented in the current implementation.
 
 ---
 
-### Decode signatures
+# 🔍 Decode
 
 ```python
 from signers import xdynosaur, xgnarly
 
-print(xgnarly.x_gnarly_decrypt(gnarly))
-print(xdynosaur.x_dynosaur_decrypt(dyno))
+gnarly_data = xgnarly.x_gnarly_decrypt(gnarly)
+dyno_data = xdynosaur.x_dynosaur_decrypt(dyno)
+
+print(gnarly_data)
+print(dyno_data)
 ```
 
-The resulting JSON contains both the low-level cryptographic information and the reconstructed signing record.
+The output includes the recovered cryptographic parameters, payload, and decoded signing record.
 
 ---
 
-## 📁 Project Structure
+# 📁 Structure
 
 ```text
 .
-├── signers/
-│   ├── xgnarly.py
-│   └── xdynosaur.py
+├── 📂 signers
+│   ├── 🔐 xgnarly.py
+│   └── 🦖 xdynosaur.py
 │
-├── main.py
-│
-├── decrypter.py
-│
-└── README.md
+├── 🧪 main.py
+├── 🔎 decrypter.py
+└── 📖 README.md
 ```
-
-### `signers/xgnarly.py`
-
-Core implementation of the `x-gnarly` format.
-
-### `signers/xdynosaur.py`
-
-Core implementation of the `x-dynosaur` format.
-
-### `main.py`
-
-Example request/signature generation and round-trip verification.
-
-### `decrypter.py`
-
-Example decoding workflow using browser-observed signatures.
 
 ---
 
-## 🔍 Reverse Engineering Methodology
-
-The implementation was reconstructed by analyzing browser-side behavior and working backwards from generated signatures.
-
-The process involved:
+# 📊 Version
 
 ```text
-Browser
-  │
-  ├── Capture generated signature
-  │
-  ├── Compare signatures across requests
-  │
-  ├── Identify stable / dynamic regions
-  │
-  ├── Recover encoding scheme
-  │
-  ├── Recover binary field layout
-  │
-  ├── Recover key placement
-  │
-  ├── Reconstruct cipher operations
-  │
-  └── Validate against browser output
-  │
-  ▼
-Python implementation
+┌────────────────────────────────┐
+│        TikTok Web Signer       │
+├────────────────────────────────┤
+│ SDK Version  : 5.3.2           │
+│ SCM Version  : 1.0.0.417       │
+│ Language     : Python          │
+│ Signers      : X-Gnarly        │
+│              : X-Dynosaur      │
+└────────────────────────────────┘
+`
 ```
-
-The goal was not merely to reproduce one static signature, but to reconstruct the underlying transformation pipeline.
-
----
-
-## ⚠️ Disclaimer
-
-This repository is intended for **educational purposes, protocol research, and reverse-engineering study**.
-
-It does not contain TikTok source code or proprietary source files. The implementation is a reconstruction based on observable browser behavior and captured outputs.
-
-Use responsibly and respect TikTok's Terms of Service, rate limits, authentication requirements, and applicable laws.
-
----
-
-## ⭐ Highlights
-
-```text
-✓ Browser-observed signatures
-✓ x-gnarly reconstruction
-✓ x-dynosaur reconstruction
-✓ ChaCha20 implementation
-✓ Dynamic key generation
-✓ Key extraction
-✓ Custom Base64
-✓ Binary payload parsing
-✓ Request metadata hashing
-✓ Version-aware serialization
-✓ Encrypt / decrypt round-trip
-✓ No external crypto dependency
-```
-
----
-
-## 🧠 Status
-
-**Reverse-engineered • Experimental • Research**
-
-The implementation is designed to make the signing formats understandable rather than treating them as black-box strings.
-
-> **Captured → Dissected → Reconstructed → Reproduced.**
